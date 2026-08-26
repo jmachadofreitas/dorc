@@ -1,0 +1,2 @@
+# Retired example: it remains declared only so `dorc clean` can remove its link.
+set editing-mode vi
