@@ -219,12 +219,18 @@ class Flow:
         Return this host's tasks with prerequisites before dependants."""
 
         selected_tasks = [task for task in self.tasks if task.matches(host)]
+        selected_ids = {id(task) for task in selected_tasks}
 
-        # Kahn's algorithm represents incoming edges as the number of selected
+        # A prerequisite excluded by this host selector can never complete,
+        # so a task that depends on one is misconfigured for this host.
+        for task in selected_tasks:
+            if any(id(prerequisite) not in selected_ids for prerequisite in task.after):
+                raise ValueError(f"task cycle or unselected dependency in {self.name}")
+
+        # Kahn's algorithm represents incoming edges as the number of
         # prerequisite tasks still remaining for each task.
         remaining_prerequisites = {
-            id(task): sum(prerequisite in selected_tasks for prerequisite in task.after)
-            for task in selected_tasks
+            id(task): len(task.after) for task in selected_tasks
         }
 
         # S: all nodes with no incoming edge.
@@ -239,14 +245,13 @@ class Flow:
             completed_task = ready_tasks.pop(0)
             ordered_tasks.append(completed_task)
             for dependent_task in selected_tasks:
-                if completed_task in dependent_task.after:
+                if any(completed_task is p for p in dependent_task.after):
                     remaining_prerequisites[id(dependent_task)] -= 1
                     # A dependant with no remaining incoming edges enters S.
                     if remaining_prerequisites[id(dependent_task)] == 0:
                         ready_tasks.append(dependent_task)
 
-        # Nodes left out of L still have incoming edges, so there is a cycle or
-        # a prerequisite that was excluded by this host selector.
+        # Nodes left out of L still have incoming edges, so there is a cycle.
         if len(ordered_tasks) != len(selected_tasks):
             raise ValueError(f"task cycle or unselected dependency in {self.name}")
 
