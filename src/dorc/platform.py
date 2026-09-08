@@ -39,16 +39,9 @@ darwin = HostSelector(family="darwin")
 
 def _read_os_release() -> dict[str, str]:
     try:
-        with open("/etc/os-release", encoding="utf-8") as file:
-            lines = file.read().splitlines()
+        return _platform.freedesktop_os_release()
     except OSError:
         return {}
-    return {
-        key: value.strip().strip('"').strip("'")
-        for line in lines
-        if "=" in line and not line.startswith("#")
-        for key, value in [line.split("=", 1)]
-    }
 
 
 def detect_desktop() -> bool:
