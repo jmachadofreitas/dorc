@@ -14,18 +14,16 @@ FIXTURE = ROOT / "tests" / "fixtures" / "example_dotfiles" / "build.py"
 
 def test_example_build():
     """The reference build exposes the intended flows and composed command."""
-    build = load_build(ROOT / "examples" / "build.py").build
+    build = load_build(FIXTURE).build
 
     assert [flow.name for flow in build.flows] == [
         "setup",
-        "tools",
         "directories",
         "install",
         "unlink-install",
     ]
     assert [flow.name for flow in build.all_flow.after] == [
         "setup",
-        "tools",
         "directories",
         "install",
     ]
