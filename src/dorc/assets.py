@@ -12,17 +12,27 @@ class Context:
     home: Path
     desktop: bool
 
-    def target(self, path: str) -> Path:
-        """Resolve a target path, expanding ``~`` against the configured home."""
+    def _expand_home(self, path: str) -> Path:
+        """Expand a leading ``~`` against the configured home.
+
+        Unlike ``Path.expanduser()``, which always resolves against the
+        real OS home, this expands against ``self.home`` so tests can
+        sandbox filesystem effects with an injected home directory.
+        """
 
         if path == "~":
             return self.home
         return self.home / path[2:] if path.startswith("~/") else Path(path)
 
+    def target(self, path: str) -> Path:
+        """Resolve a target path, expanding ``~`` against the configured home."""
+
+        return self._expand_home(path)
+
     def source(self, path: str) -> Path:
         """Resolve a source path relative to the build file when necessary."""
 
-        source_path = Path(path).expanduser()
+        source_path = self._expand_home(path)
         return (
             source_path if source_path.is_absolute() else self.source_root / source_path
         )
