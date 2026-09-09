@@ -109,14 +109,15 @@ class Runner:
         for flow in plan.flows:
             for asset in flow.assets(self.host, self.context.desktop):
                 state_before_apply = asset.status(self.context)
-                actions = (
-                    tuple(asset.apply(self.context))
-                    if asset.always_apply or not state_before_apply.ok
-                    else ()
-                )
+                needs_apply = asset.always_apply or not state_before_apply.ok
+                actions = tuple(asset.apply(self.context)) if needs_apply else ()
                 # Report the state after applying so output describes the final
                 # filesystem rather than the condition that triggered a change.
-                results.append(AssetResult(asset, asset.status(self.context), actions))
+                # Skip the redundant re-check when nothing was applied.
+                state_after_apply = (
+                    asset.status(self.context) if needs_apply else state_before_apply
+                )
+                results.append(AssetResult(asset, state_after_apply, actions))
         return results
 
 

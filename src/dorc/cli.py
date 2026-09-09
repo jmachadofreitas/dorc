@@ -102,6 +102,6 @@ def main(argv: list[str] | None = None) -> int:
 
         return 1 if any(not result.state.ok for result in asset_results) else 0
 
-    except (FileNotFoundError, KeyError, RuntimeError, ValueError) as error:
+    except (OSError, KeyError, RuntimeError, TypeError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
